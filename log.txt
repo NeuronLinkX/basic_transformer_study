@@ -1,0 +1,484 @@
+
+====================================================
+STEP 1. Inputs
+====================================================
+입력 문장: I love
+출력 정답 예시: transformers <eos>
+Decoder 입력은 teacher forcing 형태로 <sos> transformers 를 사용한다.
+Encoder token IDs = [ 1 2 ]
+Decoder token IDs = [ 0 3 ]
+
+====================================================
+STEP 2. Embedding Lookup
+====================================================
+Encoder embedding:
+  [ 0.9500 0.1500 0.2000 0.0500 ]
+  [ 0.2000 0.8500 0.2500 0.1500 ]
+Decoder embedding:
+  [ 0.1200 0.1000 0.0800 0.0500 ]
+  [ 0.2500 0.2000 0.9500 0.8200 ]
+
+====================================================
+STEP 3. Sinusoidal Positional Encoding
+====================================================
+Encoder positional encoding:
+  [ 0.0000 1.0000 0.0000 1.0000 ]
+  [ 0.8415 0.5403 0.0100 0.9999 ]
+Decoder positional encoding:
+  [ 0.0000 1.0000 0.0000 1.0000 ]
+  [ 0.8415 0.5403 0.0100 0.9999 ]
+Encoder input + position:
+  [ 0.9500 1.1500 0.2000 1.0500 ]
+  [ 1.0415 1.3903 0.2600 1.1500 ]
+Decoder input + position:
+  [ 0.1200 1.1000 0.0800 1.0500 ]
+  [ 1.0915 0.7403 0.9600 1.8199 ]
+
+====================================================
+STEP 4. Encoder Self-Attention
+====================================================
+각 encoder 토큰이 전체 입력 시퀀스를 본다.
+Encoder self-attention - Q:
+  [ 1.0225 1.1025 0.4275 0.9025 ]
+  [ 1.1339 1.3249 0.5075 0.9926 ]
+Encoder self-attention - K:
+  [ 0.7800 1.1075 0.5375 0.9975 ]
+  [ 0.8592 1.3348 0.6367 1.0946 ]
+Encoder self-attention - V:
+  [ 0.9750 1.0350 0.4575 1.0175 ]
+  [ 1.0818 1.2424 0.5575 1.1185 ]
+Encoder self-attention - head 0 scores:
+  [ 1.4273 1.6618 ]
+  [ 1.6629 1.9393 ]
+Encoder self-attention - head 0 probs:
+  [ 0.4417 0.5583 ]
+  [ 0.4313 0.5687 ]
+Encoder self-attention - head 0 context:
+  [ 1.0346 1.1508 ]
+  [ 1.0357 1.1529 ]
+Encoder self-attention - head 1 scores:
+  [ 0.7990 0.8910 ]
+  [ 0.8930 0.9968 ]
+Encoder self-attention - head 1 probs:
+  [ 0.4770 0.5230 ]
+  [ 0.4741 0.5259 ]
+Encoder self-attention - head 1 context:
+  [ 0.5098 1.0703 ]
+  [ 0.5101 1.0706 ]
+Encoder self-attention - concatenated heads:
+  [ 1.0346 1.1508 0.5098 1.0703 ]
+  [ 1.0357 1.1529 0.5101 1.0706 ]
+Encoder self-attention - output projection:
+  [ 1.0404 1.2495 0.5404 0.9888 ]
+  [ 1.0416 1.2516 0.5407 0.9890 ]
+
+====================================================
+STEP 5. Encoder Add & Norm
+====================================================
+Encoder add&norm 1 - residual + sublayer:
+  [ 1.9904 2.3995 0.7404 2.0388 ]
+  [ 2.0831 2.6419 0.8007 2.1390 ]
+Encoder add&norm 1 - normalized:
+  [ 0.3158 0.9676 -1.6762 0.3928 ]
+  [ 0.2455 1.0676 -1.6409 0.3278 ]
+
+====================================================
+STEP 6. Encoder Feed Forward
+====================================================
+Encoder FFN - hidden before ReLU:
+  [ 0.3516 0.1956 -0.6257 0.0934 0.3458 -0.1388 -0.4169 0.2546 ]
+  [ 0.3205 0.2388 -0.6306 0.0962 0.3240 -0.0999 -0.4356 0.2451 ]
+Encoder FFN - hidden after ReLU:
+  [ 0.3516 0.1956 0.0000 0.0934 0.3458 0.0000 0.0000 0.2546 ]
+  [ 0.3205 0.2388 0.0000 0.0962 0.3240 0.0000 0.0000 0.2451 ]
+Encoder FFN - output:
+  [ 0.2195 0.1455 0.0969 0.2126 ]
+  [ 0.2032 0.1608 0.0976 0.2081 ]
+Encoder add&norm 2 - residual + sublayer:
+  [ 0.5353 1.1131 -1.5793 0.6054 ]
+  [ 0.4487 1.2284 -1.5433 0.5359 ]
+Encoder add&norm 2 - normalized:
+  [ 0.3548 0.9139 -1.6913 0.4226 ]
+  [ 0.2723 1.0272 -1.6563 0.3567 ]
+
+====================================================
+STEP 7. Decoder Masked Self-Attention
+====================================================
+Decoder는 미래 토큰을 보지 못하도록 causal mask를 적용한다.
+Decoder masked self-attention - Q:
+  [ 0.2681 0.9196 0.3710 0.8374 ]
+  [ 1.1255 0.7904 1.2656 1.5985 ]
+Decoder masked self-attention - K:
+  [ 0.1064 1.0196 0.3790 0.9400 ]
+  [ 0.9910 0.8395 1.3198 1.7657 ]
+Decoder masked self-attention - V:
+  [ 0.2528 0.9260 0.3074 0.9934 ]
+  [ 1.0637 0.8532 1.1156 1.7876 ]
+Decoder masked self-attention - head 0 scores:
+  [ 0.6832 -1000000000.0000 ]
+  [ 0.6545 1.2579 ]
+Decoder masked self-attention - head 0 probs:
+  [ 1.0000 0.0000 ]
+  [ 0.3536 0.6464 ]
+Decoder masked self-attention - head 0 context:
+  [ 0.2528 0.9260 ]
+  [ 0.7770 0.8790 ]
+Decoder masked self-attention - head 1 scores:
+  [ 0.6560 -1000000000.0000 ]
+  [ 1.4017 3.1769 ]
+Decoder masked self-attention - head 1 probs:
+  [ 1.0000 0.0000 ]
+  [ 0.1449 0.8551 ]
+Decoder masked self-attention - head 1 context:
+  [ 0.3074 0.9934 ]
+  [ 0.9985 1.6725 ]
+Decoder masked self-attention - concatenated heads:
+  [ 0.2528 0.9260 0.3074 0.9934 ]
+  [ 0.7770 0.8790 0.9985 1.6725 ]
+Decoder masked self-attention - output projection:
+  [ 0.3067 0.9241 0.4021 0.9262 ]
+  [ 0.7851 1.0200 1.0770 1.5786 ]
+
+====================================================
+STEP 8. Decoder Add & Norm After Masked Attention
+====================================================
+Decoder add&norm 1 - residual + sublayer:
+  [ 0.4267 2.0241 0.4821 1.9762 ]
+  [ 1.8766 1.7603 2.0370 3.3986 ]
+Decoder add&norm 1 - normalized:
+  [ -1.0353 1.0304 -0.9636 0.9685 ]
+  [ -0.5932 -0.7694 -0.3501 1.7127 ]
+
+====================================================
+STEP 9. Decoder Cross-Attention
+====================================================
+Decoder가 encoder output 전체를 memory로 참고한다.
+Decoder cross-attention - Q:
+  [ -0.8318 0.7393 -0.5790 0.6426 ]
+  [ -0.4867 -0.7488 -0.1435 1.3685 ]
+Decoder cross-attention - K:
+  [ 0.0738 0.6885 -1.2022 0.3130 ]
+  [ 0.0137 0.7937 -1.1845 0.2472 ]
+Decoder cross-attention - V:
+  [ 0.3951 0.5931 -1.3702 0.2775 ]
+  [ 0.3307 0.6859 -1.3317 0.2154 ]
+Decoder cross-attention - head 0 scores:
+  [ 0.3166 0.4069 ]
+  [ -0.3899 -0.4249 ]
+Decoder cross-attention - head 0 probs:
+  [ 0.4774 0.5226 ]
+  [ 0.5087 0.4913 ]
+Decoder cross-attention - head 0 context:
+  [ 0.3614 0.6416 ]
+  [ 0.3634 0.6387 ]
+Decoder cross-attention - head 1 scores:
+  [ 0.6344 0.5973 ]
+  [ 0.4249 0.3595 ]
+Decoder cross-attention - head 1 probs:
+  [ 0.5093 0.4907 ]
+  [ 0.5163 0.4837 ]
+Decoder cross-attention - head 1 context:
+  [ -1.3513 0.2470 ]
+  [ -1.3516 0.2475 ]
+Decoder cross-attention - concatenated heads:
+  [ 0.3614 0.6416 -1.3513 0.2470 ]
+  [ 0.3634 0.6387 -1.3516 0.2475 ]
+Decoder cross-attention - output projection:
+  [ 0.3838 0.4412 -1.0798 0.1683 ]
+  [ 0.3855 0.4388 -1.0801 0.1687 ]
+
+====================================================
+STEP 10. Decoder Add & Norm After Cross-Attention
+====================================================
+Decoder add&norm 2 - residual + sublayer:
+  [ -0.6514 1.4716 -2.0434 1.1368 ]
+  [ -0.2077 -0.3306 -1.4302 1.8814 ]
+Decoder add&norm 2 - normalized:
+  [ -0.4438 1.0522 -1.4246 0.8162 ]
+  [ -0.1553 -0.2579 -1.1762 1.5893 ]
+
+====================================================
+STEP 11. Decoder Feed Forward
+====================================================
+Decoder FFN - hidden before ReLU:
+  [ 0.1074 0.1610 -0.6430 0.3868 0.3120 -0.0822 -0.4215 0.4001 ]
+  [ 0.2938 -0.3476 -0.4450 0.5144 0.4452 -0.4319 -0.1939 0.5010 ]
+Decoder FFN - hidden after ReLU:
+  [ 0.1074 0.1610 0.0000 0.3868 0.3120 0.0000 0.0000 0.4001 ]
+  [ 0.2938 0.0000 0.0000 0.5144 0.4452 0.0000 0.0000 0.5010 ]
+Decoder FFN - output:
+  [ 0.1273 0.1750 0.1617 0.3152 ]
+  [ 0.2237 0.1465 0.1864 0.4043 ]
+Decoder add&norm 3 - residual + sublayer:
+  [ -0.3165 1.2272 -1.2629 1.1314 ]
+  [ 0.0685 -0.1114 -0.9898 1.9936 ]
+Decoder add&norm 3 - normalized:
+  [ -0.4915 0.9923 -1.4011 0.9003 ]
+  [ -0.1578 -0.3230 -1.1299 1.6106 ]
+
+====================================================
+STEP 12. Linear Projection To Vocabulary
+====================================================
+Final decoder state (last position) = [ -0.1578 -0.3230 -1.1299 1.6106 ]
+Logits = [ -0.0545 -0.0963 -0.1097 -0.1859 0.9488 ]
+
+최종 확률:
+       <sos> : 0.153618
+           I : 0.147333
+        love : 0.145374
+transformers : 0.134701
+       <eos> : 0.418973
+
+예측된 다음 토큰: <eos>
+이 예시에서는 마지막 decoder 위치가 다음 토큰 후보(<eos> 등)를 예측한다.
+
+====================================================
+STEP 13. Summary
+====================================================
+1. forward2.cpp는 토큰 1개가 아니라 시퀀스 전체를 attention으로 처리한다.
+2. Q, K, V를 projection matrix로 따로 만든다.
+3. Multi-head attention을 2개 head로 분리해 다시 합친다.
+4. Decoder self-attention에는 causal mask가 들어간다.
+5. FFN은 2-layer 구조로 확장했고, 마지막 상태를 vocab logits로 바꾼다.
+
+====================================================
+STEP 1. Inputs
+====================================================
+입력 문장: I love
+출력 정답 예시: transformers <eos>
+Decoder 입력은 teacher forcing 형태로 <sos> transformers 를 사용한다.
+Encoder token IDs = [ 1 2 ]
+Decoder token IDs = [ 0 3 ]
+
+====================================================
+STEP 2. Embedding Lookup
+====================================================
+Encoder embedding:
+  [ 0.9500 0.1500 0.2000 0.0500 ]
+  [ 0.2000 0.8500 0.2500 0.1500 ]
+Decoder embedding:
+  [ 0.1200 0.1000 0.0800 0.0500 ]
+  [ 0.2500 0.2000 0.9500 0.8200 ]
+
+====================================================
+STEP 3. Sinusoidal Positional Encoding
+====================================================
+Encoder positional encoding:
+  [ 0.0000 1.0000 0.0000 1.0000 ]
+  [ 0.8415 0.5403 0.0100 0.9999 ]
+Decoder positional encoding:
+  [ 0.0000 1.0000 0.0000 1.0000 ]
+  [ 0.8415 0.5403 0.0100 0.9999 ]
+Encoder input + position:
+  [ 0.9500 1.1500 0.2000 1.0500 ]
+  [ 1.0415 1.3903 0.2600 1.1500 ]
+Decoder input + position:
+  [ 0.1200 1.1000 0.0800 1.0500 ]
+  [ 1.0915 0.7403 0.9600 1.8199 ]
+
+====================================================
+STEP 4. Encoder Self-Attention
+====================================================
+각 encoder 토큰이 전체 입력 시퀀스를 본다.
+Encoder self-attention - Q:
+  [ 1.0225 1.1025 0.4275 0.9025 ]
+  [ 1.1339 1.3249 0.5075 0.9926 ]
+Encoder self-attention - K:
+  [ 0.7800 1.1075 0.5375 0.9975 ]
+  [ 0.8592 1.3348 0.6367 1.0946 ]
+Encoder self-attention - V:
+  [ 0.9750 1.0350 0.4575 1.0175 ]
+  [ 1.0818 1.2424 0.5575 1.1185 ]
+Encoder self-attention - head 0 scores:
+  [ 1.4273 1.6618 ]
+  [ 1.6629 1.9393 ]
+Encoder self-attention - head 0 probs:
+  [ 0.4417 0.5583 ]
+  [ 0.4313 0.5687 ]
+Encoder self-attention - head 0 context:
+  [ 1.0346 1.1508 ]
+  [ 1.0357 1.1529 ]
+Encoder self-attention - head 1 scores:
+  [ 0.7990 0.8910 ]
+  [ 0.8930 0.9968 ]
+Encoder self-attention - head 1 probs:
+  [ 0.4770 0.5230 ]
+  [ 0.4741 0.5259 ]
+Encoder self-attention - head 1 context:
+  [ 0.5098 1.0703 ]
+  [ 0.5101 1.0706 ]
+Encoder self-attention - concatenated heads:
+  [ 1.0346 1.1508 0.5098 1.0703 ]
+  [ 1.0357 1.1529 0.5101 1.0706 ]
+Encoder self-attention - output projection:
+  [ 1.0404 1.2495 0.5404 0.9888 ]
+  [ 1.0416 1.2516 0.5407 0.9890 ]
+
+====================================================
+STEP 5. Encoder Add & Norm
+====================================================
+Encoder add&norm 1 - residual + sublayer:
+  [ 1.9904 2.3995 0.7404 2.0388 ]
+  [ 2.0831 2.6419 0.8007 2.1390 ]
+Encoder add&norm 1 - normalized:
+  [ 0.3158 0.9676 -1.6762 0.3928 ]
+  [ 0.2455 1.0676 -1.6409 0.3278 ]
+
+====================================================
+STEP 6. Encoder Feed Forward
+====================================================
+Encoder FFN - hidden before ReLU:
+  [ 0.3516 0.1956 -0.6257 0.0934 0.3458 -0.1388 -0.4169 0.2546 ]
+  [ 0.3205 0.2388 -0.6306 0.0962 0.3240 -0.0999 -0.4356 0.2451 ]
+Encoder FFN - hidden after ReLU:
+  [ 0.3516 0.1956 0.0000 0.0934 0.3458 0.0000 0.0000 0.2546 ]
+  [ 0.3205 0.2388 0.0000 0.0962 0.3240 0.0000 0.0000 0.2451 ]
+Encoder FFN - output:
+  [ 0.2195 0.1455 0.0969 0.2126 ]
+  [ 0.2032 0.1608 0.0976 0.2081 ]
+Encoder add&norm 2 - residual + sublayer:
+  [ 0.5353 1.1131 -1.5793 0.6054 ]
+  [ 0.4487 1.2284 -1.5433 0.5359 ]
+Encoder add&norm 2 - normalized:
+  [ 0.3548 0.9139 -1.6913 0.4226 ]
+  [ 0.2723 1.0272 -1.6563 0.3567 ]
+
+====================================================
+STEP 7. Decoder Masked Self-Attention
+====================================================
+Decoder는 미래 토큰을 보지 못하도록 causal mask를 적용한다.
+Decoder masked self-attention - Q:
+  [ 0.2681 0.9196 0.3710 0.8374 ]
+  [ 1.1255 0.7904 1.2656 1.5985 ]
+Decoder masked self-attention - K:
+  [ 0.1064 1.0196 0.3790 0.9400 ]
+  [ 0.9910 0.8395 1.3198 1.7657 ]
+Decoder masked self-attention - V:
+  [ 0.2528 0.9260 0.3074 0.9934 ]
+  [ 1.0637 0.8532 1.1156 1.7876 ]
+Decoder masked self-attention - head 0 scores:
+  [ 0.6832 -1000000000.0000 ]
+  [ 0.6545 1.2579 ]
+Decoder masked self-attention - head 0 probs:
+  [ 1.0000 0.0000 ]
+  [ 0.3536 0.6464 ]
+Decoder masked self-attention - head 0 context:
+  [ 0.2528 0.9260 ]
+  [ 0.7770 0.8790 ]
+Decoder masked self-attention - head 1 scores:
+  [ 0.6560 -1000000000.0000 ]
+  [ 1.4017 3.1769 ]
+Decoder masked self-attention - head 1 probs:
+  [ 1.0000 0.0000 ]
+  [ 0.1449 0.8551 ]
+Decoder masked self-attention - head 1 context:
+  [ 0.3074 0.9934 ]
+  [ 0.9985 1.6725 ]
+Decoder masked self-attention - concatenated heads:
+  [ 0.2528 0.9260 0.3074 0.9934 ]
+  [ 0.7770 0.8790 0.9985 1.6725 ]
+Decoder masked self-attention - output projection:
+  [ 0.3067 0.9241 0.4021 0.9262 ]
+  [ 0.7851 1.0200 1.0770 1.5786 ]
+
+====================================================
+STEP 8. Decoder Add & Norm After Masked Attention
+====================================================
+Decoder add&norm 1 - residual + sublayer:
+  [ 0.4267 2.0241 0.4821 1.9762 ]
+  [ 1.8766 1.7603 2.0370 3.3986 ]
+Decoder add&norm 1 - normalized:
+  [ -1.0353 1.0304 -0.9636 0.9685 ]
+  [ -0.5932 -0.7694 -0.3501 1.7127 ]
+
+====================================================
+STEP 9. Decoder Cross-Attention
+====================================================
+Decoder가 encoder output 전체를 memory로 참고한다.
+Decoder cross-attention - Q:
+  [ -0.8318 0.7393 -0.5790 0.6426 ]
+  [ -0.4867 -0.7488 -0.1435 1.3685 ]
+Decoder cross-attention - K:
+  [ 0.0738 0.6885 -1.2022 0.3130 ]
+  [ 0.0137 0.7937 -1.1845 0.2472 ]
+Decoder cross-attention - V:
+  [ 0.3951 0.5931 -1.3702 0.2775 ]
+  [ 0.3307 0.6859 -1.3317 0.2154 ]
+Decoder cross-attention - head 0 scores:
+  [ 0.3166 0.4069 ]
+  [ -0.3899 -0.4249 ]
+Decoder cross-attention - head 0 probs:
+  [ 0.4774 0.5226 ]
+  [ 0.5087 0.4913 ]
+Decoder cross-attention - head 0 context:
+  [ 0.3614 0.6416 ]
+  [ 0.3634 0.6387 ]
+Decoder cross-attention - head 1 scores:
+  [ 0.6344 0.5973 ]
+  [ 0.4249 0.3595 ]
+Decoder cross-attention - head 1 probs:
+  [ 0.5093 0.4907 ]
+  [ 0.5163 0.4837 ]
+Decoder cross-attention - head 1 context:
+  [ -1.3513 0.2470 ]
+  [ -1.3516 0.2475 ]
+Decoder cross-attention - concatenated heads:
+  [ 0.3614 0.6416 -1.3513 0.2470 ]
+  [ 0.3634 0.6387 -1.3516 0.2475 ]
+Decoder cross-attention - output projection:
+  [ 0.3838 0.4412 -1.0798 0.1683 ]
+  [ 0.3855 0.4388 -1.0801 0.1687 ]
+
+====================================================
+STEP 10. Decoder Add & Norm After Cross-Attention
+====================================================
+Decoder add&norm 2 - residual + sublayer:
+  [ -0.6514 1.4716 -2.0434 1.1368 ]
+  [ -0.2077 -0.3306 -1.4302 1.8814 ]
+Decoder add&norm 2 - normalized:
+  [ -0.4438 1.0522 -1.4246 0.8162 ]
+  [ -0.1553 -0.2579 -1.1762 1.5893 ]
+
+====================================================
+STEP 11. Decoder Feed Forward
+====================================================
+Decoder FFN - hidden before ReLU:
+  [ 0.1074 0.1610 -0.6430 0.3868 0.3120 -0.0822 -0.4215 0.4001 ]
+  [ 0.2938 -0.3476 -0.4450 0.5144 0.4452 -0.4319 -0.1939 0.5010 ]
+Decoder FFN - hidden after ReLU:
+  [ 0.1074 0.1610 0.0000 0.3868 0.3120 0.0000 0.0000 0.4001 ]
+  [ 0.2938 0.0000 0.0000 0.5144 0.4452 0.0000 0.0000 0.5010 ]
+Decoder FFN - output:
+  [ 0.1273 0.1750 0.1617 0.3152 ]
+  [ 0.2237 0.1465 0.1864 0.4043 ]
+Decoder add&norm 3 - residual + sublayer:
+  [ -0.3165 1.2272 -1.2629 1.1314 ]
+  [ 0.0685 -0.1114 -0.9898 1.9936 ]
+Decoder add&norm 3 - normalized:
+  [ -0.4915 0.9923 -1.4011 0.9003 ]
+  [ -0.1578 -0.3230 -1.1299 1.6106 ]
+
+====================================================
+STEP 12. Linear Projection To Vocabulary
+====================================================
+Final decoder state (last position) = [ -0.1578 -0.3230 -1.1299 1.6106 ]
+Logits = [ -0.0545 -0.0963 -0.1097 -0.1859 0.9488 ]
+
+최종 확률:
+       <sos> : 0.153618
+           I : 0.147333
+        love : 0.145374
+transformers : 0.134701
+       <eos> : 0.418973
+
+예측된 다음 토큰: <eos>
+이 예시에서는 마지막 decoder 위치가 다음 토큰 후보(<eos> 등)를 예측한다.
+
+====================================================
+STEP 13. Summary
+====================================================
+1. forward.cpp는 토큰 1개가 아니라 시퀀스 전체를 attention으로 처리한다.
+2. Q, K, V를 projection matrix로 따로 만든다.
+3. Multi-head attention을 2개 head로 분리해 다시 합친다.
+4. Decoder self-attention에는 causal mask가 들어간다.
+5. FFN은 2-layer 구조로 확장했고, 마지막 상태를 vocab logits로 바꾼다.
