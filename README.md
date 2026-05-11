@@ -1,7 +1,27 @@
+## Abstract
+
+**A Formula-Centered Walkthrough of the Transformer Encoder–Decoder Forward Pass: Numerical Verification with a Toy Example**
+
+We present a formula-centered, step-by-step exposition of the Transformer encoder-decoder forward pass, grounding each computational stage in explicit numerical values derived from a minimal toy example ($d_{model}=4$, $n_{head}=2$, vocabulary size $|V|=5$).
+
+Starting from token-ID lookup and sinusoidal positional encoding, we trace the propagation of representations through encoder multi-head self-attention, position-wise feed-forward networks, and residual Add & Norm operations, before detailing decoder masked self-attention, encoder-decoder cross-attention, and the final linear projection to vocabulary logits.
+
+For each sub-operation, including scaled dot-product attention ($\mathrm{Score}=QK^T/\sqrt{d_k}$), causal masking ($M_{ij}=-\infty$ for $j>i$), layer normalization, and ReLU-gated FFN, we report the corresponding intermediate matrices computed from the running example.
+
+The forward pass concludes with a softmax over five candidate tokens, yielding $P(\langle eos \rangle)=0.4190$ as the highest-probability next token, which is consistent with the teacher-forced target sequence.
+
+This work is intended as a pedagogical reference for researchers and practitioners seeking a transparent, formula-level understanding of Transformer inference, and serves as a reproducible baseline for debugging and validating custom implementations.
+
+![Figure 1](Fig_1.png)
+
 # Transformer Encoder–Decoder Forward Pass Educational Implementation
 
 A pedagogical C++ implementation of the Transformer Encoder–Decoder forward propagation pipeline, designed for structural interpretability rather than production-scale training.
 The project explicitly computes each intermediate tensor involved in the Transformer architecture, including token embedding lookup, sinusoidal positional encoding, multi-head attention, residual connections, layer normalization, feed-forward networks, and final vocabulary projection. 
+
+## Transformer Architecture
+
+![Transformer Architecture](Transformer.png)
 
 ---
 

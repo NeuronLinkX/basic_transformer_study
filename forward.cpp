@@ -26,6 +26,7 @@
     4. Encoder Self-Attention
     5. Encoder Add & Norm
     6. Encoder FFN
+    --- output ---> Encoder의 context vector
     7. Decoder Masked Self-Attention
     8. Decoder Add & Norm
     9. Decoder Cross-Attention
