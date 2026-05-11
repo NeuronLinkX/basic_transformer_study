@@ -215,8 +215,9 @@ PE(pos, 2i + 1) &= \cos\left(\frac{pos}{10000^{2i/d_{model}}}\right)
 
 ## Layer Normalization
 
+```math
 LayerNorm(x)=\frac{x-\mu}{\sqrt{\sigma^2+\epsilon}}
-
+```
 ---
 
 # Multi-Head Attention Structure
