@@ -284,8 +284,22 @@ No external dependencies are required.
 ## Linux / macOS
 
 ```bash
-g++ -std=c++17 -O2 transformer_forward.cpp -o transformer_forward
-./transformer_forward
+./build.sh
+./build/forward_example
+```
+
+Manual compile:
+
+```bash
+g++ -std=c++17 -Wall -Wextra -pedantic forward.cpp main.cpp -o forward_example
+./forward_example
+```
+
+Additional examples:
+
+```bash
+./build.sh release
+./build.sh asan run
 ```
 
 ---
@@ -293,8 +307,8 @@ g++ -std=c++17 -O2 transformer_forward.cpp -o transformer_forward
 ## Windows (MSVC)
 
 ```bash
-cl /EHsc /std:c++17 transformer_forward.cpp
-transformer_forward.exe
+cl /EHsc /std:c++17 forward.cpp main.cpp /Fe:forward_example.exe
+forward_example.exe
 ```
 
 ---

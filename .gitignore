@@ -1,5 +1,5 @@
-forward
+forward_example
 .vscode/
-build/
+build/*
 *.o
 *.obj
