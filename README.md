@@ -2,7 +2,7 @@
 
 **A Formula-Centered Walkthrough of the Transformer Encoder–Decoder Forward Pass: Numerical Verification with a Toy Example**
 
-We present a formula-centered, step-by-step exposition of the Transformer encoder-decoder forward pass, grounding each computational stage in explicit numerical values derived from a minimal toy example ($d_{model}=4$, $n_{head}=2$, vocabulary size $|V|=5$).
+I present a formula-centered, step-by-step exposition of the Transformer encoder-decoder forward pass, grounding each computational stage in explicit numerical values derived from a minimal toy example ($d_{model}=4$, $n_{head}=2$, vocabulary size $|V|=5$).
 
 Starting from token-ID lookup and sinusoidal positional encoding, we trace the propagation of representations through encoder multi-head self-attention, position-wise feed-forward networks, and residual Add & Norm operations, before detailing decoder masked self-attention, encoder-decoder cross-attention, and the final linear projection to vocabulary logits.
 
@@ -19,10 +19,9 @@ This work is intended as a pedagogical reference for researchers and practitione
 A pedagogical C++ implementation of the Transformer Encoder–Decoder forward propagation pipeline, designed for structural interpretability rather than production-scale training.
 The project explicitly computes each intermediate tensor involved in the Transformer architecture, including token embedding lookup, sinusoidal positional encoding, multi-head attention, residual connections, layer normalization, feed-forward networks, and final vocabulary projection. 
 
-## Transformer Architecture
+## Transformer Code Architecture
 
-![Transformer Architecture](Transformer.png)
-
+![Code Structure](Transformer_code.png)
 ---
 
 ## Overview
