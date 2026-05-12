@@ -446,7 +446,7 @@ Matrix feedForwardBlock(const Matrix& x, const FFNWeights& weights, const std::s
 // residual connection과 LayerNorm을 적용해 sublayer 출력을 안정화한다.
 Matrix addNorm(const Matrix& residual, const Matrix& sublayerOutput, const std::string& name) {
     // Transformer의 표준 블록:
-    // 1. Residual connection으로 원래 입력 정보를 보존하고
+    // 1. Residual connection으로 원래 입력 정보를 보존하고 (deeplearning 층이 깊어질수록 : gradient vanishing 발생 --> 정보 손실 및 학습 불안정)
     // 2. LayerNorm으로 값 분포를 안정화한다.
     //
     // 수식:

@@ -23,7 +23,7 @@ int main() {
         Encoder는 "I love"를 이해하고, Decoder는 "<sos> transformers"까지 본 뒤 다음 토큰을 예측
     */
     const int dModel = 4;
-    const int numHeads = 2;
+    const int numHeads = 2; // Multi-Head Attention의 병렬 Attention head 개수
 
     std::vector<std::string> vocab = {
         "<sos>", "I", "love", "transformers", "<eos>"
@@ -259,6 +259,10 @@ int main() {
         {0.00f, 0.05f, 0.10f, 0.95f, 0.85f}
     };
 
+
+    // ******************************************************************************************************************
+    // ** ENCODER **
+    // ******************************************************************************************************************
     std::vector<int> encoderTokenIds = {1, 2};
     std::vector<int> decoderTokenIds = {0, 3};
 
@@ -336,6 +340,7 @@ int main() {
     Matrix encoderNorm1 = addNorm(encoderInput, encoderAttention, "Encoder add&norm 1");
 
     // STEP 6. Encoder Feed Forward
+    // Multi-Head Attention(STEP4) -> Add&Norm -> FFN
     // FFN은 attention으로 섞인 문맥 정보를 각 토큰 위치마다 비선형 변환한다.
     // 그 뒤 Add & Norm을 한 번 더 수행해 encoder 최종 출력을 만듬
     //
@@ -367,6 +372,10 @@ int main() {
     // masked self-attention 결과를 합쳐 현재 decoder 상태를 만듬
     stage(8, "Decoder Add & Norm After Masked Attention");
     Matrix decoderNorm1 = addNorm(decoderInput, decoderMaskedAttention, "Decoder add&norm 1");
+
+    // ******************************************************************************************************************
+    // ** DECODER **
+    // ******************************************************************************************************************
 
     // STEP 9. Decoder Cross-Attention
     // 여기서는 출처가 갈린다.
