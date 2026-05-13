@@ -19,6 +19,9 @@ This work is intended as a pedagogical reference for researchers and practitione
 A pedagogical C++ implementation of the Transformer Encoder–Decoder forward propagation pipeline, designed for structural interpretability rather than production-scale training.
 The project explicitly computes each intermediate tensor involved in the Transformer architecture, including token embedding lookup, sinusoidal positional encoding, multi-head attention, residual connections, layer normalization, feed-forward networks, and final vocabulary projection. 
 
+## Transformer Code Architecture
+
+![Code Structure](Transformer_code.png)
 ---
 
 ## Overview
