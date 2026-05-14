@@ -36,6 +36,15 @@ Decoder input + position:
 ====================================================
 STEP 4. Encoder Self-Attention
 ====================================================
+1. Q_enc = X_enc × encoderSelf[0]
+2. K_enc = X_enc × encoderSelf[1]
+3. V_enc = X_enc × encoderSelf[2]
+4. Q_enc, K_enc로 attention score 계산
+5. softmax(score)로 attention weight 계산
+6. attention weight × V_enc로 head context 생성
+7. head 0 context와 head 1 context를 concatenate
+8. MHA_enc = Concat(head0, head1) × encoderSelf[3]
+
 각 encoder 토큰이 전체 입력 시퀀스를 본다.
 Encoder self-attention - Q:
   [ 1.0225 1.1025 0.4275 0.9025 ]

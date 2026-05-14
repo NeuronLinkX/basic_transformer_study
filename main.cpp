@@ -64,25 +64,25 @@ int main() {
     // 즉 encoderSelf는 encoder 입력 "I love"를 가지고
     // Query/Key/Value를 만드는 선형변환 규칙이다.
     AttentionWeights encoderSelf {
-        {
+        { // encoderSelf[0] → Encoder self-attention - Q(Q_enc)
             {0.90f, 0.10f, 0.00f, 0.10f},
             {0.10f, 0.85f, 0.05f, 0.00f},
             {0.00f, 0.15f, 0.80f, 0.10f},
             {0.05f, 0.00f, 0.20f, 0.75f}
         },
-        {
+        { // encoderSelf[1] → Encoder self-attention - K(K_enc)
             {0.80f, 0.00f, 0.10f, 0.10f},
             {0.00f, 0.90f, 0.10f, 0.00f},
             {0.10f, 0.10f, 0.85f, 0.05f},
             {0.00f, 0.05f, 0.15f, 0.85f}
         },
-        {
+        { // encoderSelf[2] → Encoder self-attention - V(V_enc)
             {0.85f, 0.10f, 0.00f, 0.00f},
             {0.10f, 0.80f, 0.15f, 0.00f},
             {0.00f, 0.10f, 0.90f, 0.10f},
             {0.05f, 0.00f, 0.10f, 0.95f}
         },
-        {
+        { // encoderSelf[3] → oncatenated heads를 최종 MHA_enc로 변환
             {0.95f, 0.05f, 0.00f, 0.00f},
             {0.05f, 0.95f, 0.00f, 0.00f},
             {0.00f, 0.10f, 0.85f, 0.05f},
