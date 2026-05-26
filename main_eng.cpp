@@ -5,7 +5,7 @@
 
 #include "forward.h"
 
-// Transformer encoder-decoder 예제 전체 순전파를 단계별로 실행한다.
+// Runs the full forward pass of the Transformer encoder-decoder example step by step.
 int main() {
     /*
         Vocabulary:
@@ -15,15 +15,16 @@ int main() {
         3 = transformers
         4 = <eos>
 
-        따라서 이번 예제의 입력은 다음과 같다.
-        Encoder 입력 = [I, love]
-        Decoder 입력 = [<sos>, transformers]
+        Therefore, the input for this example is as follows.
+        Encoder input = [I, love]
+        Decoder input = [<sos>, transformers]
 
-        의미:
-        Encoder는 "I love"를 이해하고, Decoder는 "<sos> transformers"까지 본 뒤 다음 토큰을 예측
+        Meaning:
+        The Encoder understands "I love", and the Decoder predicts the next token
+        after seeing "<sos> transformers".
     */
     const int dModel = 4;
-    const int numHeads = 2; // Multi-Head Attention의 병렬 Attention head 개수
+    const int numHeads = 2; // Number of parallel attention heads in Multi-Head Attention
 
     std::vector<std::string> vocab = {
         "<sos>", "I", "love", "transformers", "<eos>"
@@ -37,32 +38,32 @@ int main() {
         {0.02f, 0.04f, 0.12f, 0.92f}  // <eos>
     };
 
-    // 이 아래의 attention/FFN/output 가중치들은
-    // 실제 학습(train)으로 얻은 모델 파라미터가 아니다.
+    // The attention, FFN, and output weights below
+    // are not model parameters obtained through actual training.
     //
-    // 또한 완전 랜덤으로 뽑은 숫자도 아니다.
-    // 이 예제가 안정적으로 동작하고, 계산 흐름을 설명하기 쉽도록
-    // 사람이 직접 작게 정한 toy weight들이다.
+    // They are also not completely random numbers.
+    // They are small toy weights manually chosen
+    // so that this example works stably and the computation flow is easy to explain.
     //
-    // 왜 이런 숫자를 썼는가?
-    // 1. 대체로 0~1 근처의 작은 값으로 두어 계산이 과하게 커지지 않게 한다.
-    // 2. 대각선 부근 값을 크게 두어 원래 차원 정보가 어느 정도 유지되게 한다.
-    // 3. 비대각선에 작은 값을 넣어 차원 간 정보가 조금 섞이게 한다.
-    // 4. 최종적으로 예제 출력이 해석 가능하고, <eos> 예측까지 자연스럽게 이어지게 한다.
+    // Why are these numbers used?
+    // 1. Most values are kept around 0 to 1 so the computations do not grow excessively.
+    // 2. Larger near-diagonal values help preserve the original dimensional information to some extent.
+    // 3. Small off-diagonal values allow a small amount of information mixing across dimensions.
+    // 4. The final example output remains interpretable and naturally leads to the <eos> prediction.
     //
-    // 따라서 0.90f, 0.85f 같은 값은 "학습이 찾아낸 정답"이 아니라
-    // "이 차원을 비교적 강하게 통과시키겠다"는 의도를 담은 수동 설정값이다.
+    // Therefore, values such as 0.90f and 0.85f are not "answers found by training";
+    // they are manually assigned values meaning "this dimension should pass through relatively strongly".
 
-    // Encoder self-attention용 가중치.
-    // 순서대로 Wq, Wk, Wv, Wo 이며 모두 shape 4x4 이다.
+    // Weights for Encoder self-attention.
+    // In order, these are Wq, Wk, Wv, and Wo, all with shape 4x4.
     //
-    // 해석:
-    // - 큰 대각선 값: 각 차원이 자기 정보는 강하게 유지
-    // - 작은 비대각선 값: 다른 차원 정보는 약하게 섞음
-    // - 0.00 값: 일부 연결은 단순화를 위해 사실상 끊어 둠
+    // Interpretation:
+    // - Large diagonal values: each dimension strongly preserves its own information.
+    // - Small off-diagonal values: information from other dimensions is weakly mixed.
+    // - 0.00 values: some connections are effectively removed for simplicity.
     //
-    // 즉 encoderSelf는 encoder 입력 "I love"를 가지고
-    // Query/Key/Value를 만드는 선형변환 규칙이다.
+    // In other words, encoderSelf defines the linear transformation rules
+    // that create Query, Key, and Value from the encoder input "I love".
     AttentionWeights encoderSelf {
         { // encoderSelf[0] → Encoder self-attention - Q(Q_enc)
             {0.90f, 0.10f, 0.00f, 0.10f},
@@ -82,7 +83,7 @@ int main() {
             {0.00f, 0.10f, 0.90f, 0.10f},
             {0.05f, 0.00f, 0.10f, 0.95f}
         },
-        { // encoderSelf[3] → oncatenated heads를 최종 MHA_enc로 변환
+        { // encoderSelf[3] -> Converts the concatenated heads into the final MHA_enc.
             {0.95f, 0.05f, 0.00f, 0.00f},
             {0.05f, 0.95f, 0.00f, 0.00f},
             {0.00f, 0.10f, 0.85f, 0.05f},
@@ -90,15 +91,15 @@ int main() {
         }
     };
 
-    // Decoder masked self-attention용 가중치.
-    // 구조는 encoderSelf와 같지만, decoder 블록용으로 별도 값을 둔 것이다.
+    // Weights for Decoder masked self-attention.
+    // The structure is the same as encoderSelf, but separate values are used for the decoder block.
     //
-    // 이것도 학습된 값이 아니라 예제용 수동 설정값이다.
-    // encoderSelf와 비슷한 크기의 숫자를 쓰되 약간 다르게 둔 이유는
-    // encoder self-attention과 decoder self-attention이
-    // 서로 다른 블록이라는 점을 코드상에서 드러내기 위해서다.
+    // These are also manually assigned example values, not trained values.
+    // The reason for using values similar in scale to encoderSelf but slightly different is
+    // to make it clear in the code that encoder self-attention and decoder self-attention
+    // are different blocks.
     //
-    // 실제 attention 결과는 이 가중치뿐 아니라 causal mask의 영향도 함께 받는다.
+    // The actual attention result is affected not only by these weights but also by the causal mask.
     AttentionWeights decoderSelf {
         {
             {0.88f, 0.08f, 0.00f, 0.12f},
@@ -126,17 +127,17 @@ int main() {
         }
     };
 
-    // Decoder cross-attention용 가중치.
+    // Weights for Decoder cross-attention.
     //
-    // Query는 decoder 상태에서 오고,
-    // Key와 Value는 encoder output에서 온다.
-    // 따라서 이 가중치들은 decoder가 encoder memory를
-    // 어떤 방식으로 조회할지 정하는 규칙이다.
+    // Query comes from the decoder state,
+    // while Key and Value come from the encoder output.
+    // Therefore, these weights define the rules
+    // for how the decoder queries the encoder memory.
     //
-    // 이 역시 학습된 값이 아니라 사람이 만든 예제용 숫자다.
-    // self-attention과 완전히 같은 값을 쓰지 않은 이유는
-    // "자기 자신을 보는 attention"과 "encoder를 참고하는 attention"의 역할 차이를
-    // 분리해서 보여주기 위해서다.
+    // These are also human-made example values, not trained values.
+    // The reason for not using exactly the same values as self-attention is
+    // to separate the role difference between "attention to itself"
+    // and "attention that refers to the encoder".
     AttentionWeights crossAttention {
         {
             {0.90f, 0.05f, 0.00f, 0.10f},
@@ -164,26 +165,26 @@ int main() {
         }
     };
 
-    // Encoder FFN 가중치.
+    // Encoder FFN weights.
     //
-    // 구조:
-    // - 첫 번째 행렬 W1: 4x8
-    // - 첫 번째 bias b1: 길이 8
-    // - 두 번째 행렬 W2: 8x4
-    // - 두 번째 bias b2: 길이 4
+    // Structure:
+    // - First matrix W1: 4x8
+    // - First bias b1: length 8
+    // - Second matrix W2: 8x4
+    // - Second bias b2: length 4
     //
-    // 이것도 학습으로 얻은 값이 아니라 수동 설정값이다.
+    // These are also manually assigned values, not values obtained through training.
     //
-    // 왜 4 -> 8 -> 4 구조인가?
-    // - 실제 Transformer의 FFN처럼 중간 hidden 차원을 확장한 뒤
-    //   다시 d_model로 줄이는 구조를 보여주기 위해서다.
+    // Why use the 4 -> 8 -> 4 structure?
+    // - This demonstrates the structure of expanding the intermediate hidden dimension
+    //   and then reducing it back to d_model, as in a real Transformer FFN.
     //
-    // 왜 양수 값이 많은가?
-    // - ReLU 통과 후 정보가 너무 많이 사라지지 않게 하기 위해서다.
+    // Why are many values positive?
+    // - This prevents too much information from disappearing after passing through ReLU.
     //
-    // 왜 bias에 작은 음수가 섞여 있는가?
-    // - 모든 hidden unit이 무조건 활성화되지 않도록
-    //   약한 기준점(threshold 비슷한 역할)을 주기 위해서다.
+    // Why are small negative values mixed into the bias?
+    // - This gives a weak reference point, similar to a threshold,
+    //   so that not all hidden units are always activated.
     FFNWeights encoderFFN {
         {
             {0.40f, 0.10f, 0.30f, 0.00f, 0.20f, 0.00f, 0.35f, 0.10f},
@@ -205,16 +206,16 @@ int main() {
         {0.01f, 0.02f, 0.01f, 0.03f}
     };
 
-    // Decoder FFN 가중치.
+    // Decoder FFN weights.
     //
-    // 구조는 encoderFFN과 동일한 4 -> 8 -> 4 이다.
-    // 이 값들도 학습된 값이 아니라 예제용 수동 설정값이다.
+    // The structure is the same 4 -> 8 -> 4 structure as encoderFFN.
+    // These values are also manually assigned example values, not trained values.
     //
-    // encoderFFN과 숫자가 조금 다른 이유:
-    // - decoder는 masked self-attention과 cross-attention을 거친 표현을 다루므로
-    //   encoder와 완전히 같은 변환을 쓰지 않는다는 점을 보여주기 위해서다.
-    // - 마지막 vocabulary projection 전에 decoder 상태가
-    //   다음 토큰 예측에 적합한 방향으로 변형되게 하려는 목적도 있다.
+    // Why are the numbers slightly different from encoderFFN?
+    // - The decoder handles representations that have passed through masked self-attention and cross-attention,
+    //   so this shows that it does not use exactly the same transformation as the encoder.
+    // - Another purpose is to transform the decoder state
+    //   in a direction suitable for next-token prediction before the final vocabulary projection.
     FFNWeights decoderFFN {
         {
             {0.42f, 0.08f, 0.28f, 0.00f, 0.24f, 0.00f, 0.30f, 0.12f},
@@ -236,22 +237,22 @@ int main() {
         {0.02f, 0.03f, 0.02f, 0.03f}
     };
 
-    // 최종 vocabulary projection 가중치.
+    // Final vocabulary projection weights.
     //
-    // shape은 4x5 이다.
-    // - 입력: 마지막 decoder 상태 h_last (길이 4)
-    // - 출력: vocab 5개 단어의 logit
+    // The shape is 4x5.
+    // - Input: final decoder state h_last (length 4)
+    // - Output: logits for the 5 vocabulary tokens
     //
-    // 수식:
+    // Formula:
     // z = h_last * W_vocab
     //
-    // 이것도 학습된 출력층 파라미터가 아니라 예제용 수동 설정값이다.
-    // 특히 이 예제에서는 최종적으로 <eos>가 가장 높은 확률로 나오도록
-    // 일부 열이 그 방향으로 반응하기 쉽게 조정되어 있다.
+    // These are also manually assigned example values, not trained output-layer parameters.
+    // In particular, in this example, some columns are adjusted
+    // so that <eos> is likely to receive the highest final probability.
     //
-    // 따라서 각 숫자는
-    // "decoder 상태의 특정 차원이 커졌을 때 어떤 단어 점수를 얼마나 올릴지"
-    // 를 정하는 계수라고 보면 된다.
+    // Therefore, each number can be understood as a coefficient
+    // that determines "how much a word score should increase
+    // when a specific dimension of the decoder state becomes large".
     Matrix outputWeight = {
         {0.10f, 0.20f, 0.12f, 0.85f, 0.30f},
         {0.12f, 0.10f, 0.15f, 0.70f, 0.28f},
@@ -270,23 +271,23 @@ int main() {
     // X_id = [1, 2]
     // Y_id = [0, 3]
     //
-    // Encoder는 입력 문장 "I love"를 받는다.
-    // Decoder는 teacher forcing 예제로 "<sos> transformers"를 입력받고
-    // 마지막 위치에서 다음 토큰을 예측한다.
+    // The Encoder receives the input sentence "I love".
+    // The Decoder receives "<sos> transformers" as a teacher-forcing example
+    // and predicts the next token at the final position.
     stage(1, "Inputs");
-    std::cout << "입력 문장: I love\n";
-    std::cout << "출력 정답 예시: transformers <eos>\n";
-    std::cout << "Decoder 입력은 teacher forcing 형태로 <sos> transformers 를 사용한다.\n";
+    std::cout << "Input sentence: I love\n";
+    std::cout << "Example output: transformers <eos>\n";
+    std::cout << "Decoder input uses teacher forcing with <sos> transformers.\n";
     printTokenIds("Encoder token IDs", encoderTokenIds);
     printTokenIds("Decoder token IDs", decoderTokenIds);
 
     // STEP 2. Embedding Lookup
-    // 정수 토큰 ID를 길이 d_model = 4 인 의미 벡터로 바꿈
+    // Converts integer token IDs into semantic vectors of length d_model = 4.
     //
-    // Embedding table E의 shape:
+    // Shape of the embedding table E:
     // |V| x d_model = 5 x 4
     //
-    // 예:
+    // Example:
     // I    -> [0.9500, 0.1500, 0.2000, 0.0500]
     // love -> [0.2000, 0.8500, 0.2500, 0.1500]
     stage(2, "Embedding Lookup");
@@ -296,12 +297,12 @@ int main() {
     printMatrix("Decoder embedding", decoderInput);
 
     // STEP 3. Positional Encoding
-    // 각 위치(pos)에 대한 사인/코사인 벡터를 만들어 embedding에 더함
+    // Creates sine/cosine vectors for each position (pos) and adds them to the embeddings.
     //
-    // 예를 들어 position 0의 positional encoding은
-    // [0.0000, 1.0000, 0.0000, 1.0000] 이고,
-    // "I"의 embedding [0.9500, 0.1500, 0.2000, 0.0500]에 더하면
-    // [0.9500, 1.1500, 0.2000, 1.0500]이 된다.
+    // For example, the positional encoding for position 0 is
+    // [0.0000, 1.0000, 0.0000, 1.0000],
+    // and when it is added to the embedding of "I", [0.9500, 0.1500, 0.2000, 0.0500],
+    // the result becomes [0.9500, 1.1500, 0.2000, 1.0500].
     stage(3, "Sinusoidal Positional Encoding");
     Matrix encoderPE = positionalEncoding(static_cast<int>(encoderInput.size()), dModel);
     Matrix decoderPE = positionalEncoding(static_cast<int>(decoderInput.size()), dModel);
@@ -314,14 +315,14 @@ int main() {
     printMatrix("Decoder input + position", decoderInput);
 
     // STEP 4. Encoder Self-Attention
-    // Encoder self-attention에서는 Query, Key, Value가 모두 encoder 입력에서 나온다.
+    // In Encoder self-attention, Query, Key, and Value all come from the encoder input.
     //
     // Q = XW^Q
     // K = XW^K
     // V = XW^V
     //
-    // 각 encoder 토큰은 입력 문장 전체를 보며
-    // "I"와 "love"가 서로 어떤 관련이 있는지 계산한다.
+    // Each encoder token attends to the entire input sequence
+    // and computes how "I" and "love" are related to each other.
     stage(4, "Encoder Self-Attention");
     std::cout << "각 encoder 토큰이 전체 입력 시퀀스를 본다.\n";
     Matrix encoderAttention = multiHeadAttention(
@@ -332,17 +333,17 @@ int main() {
     // X_tilde = LayerNorm(X^(0) + MHA(X^(0)))
     //
     // Residual Add:
-    // 원래 입력 정보와 attention 결과를 합침
+    // Combines the original input information with the attention result.
     //
     // LayerNorm:
-    // 각 토큰 벡터의 평균/분산을 정규화해 학습과 계산을 안정화한다.
+    // Normalizes the mean and variance of each token vector to stabilize training and computation.
     stage(5, "Encoder Add & Norm");
     Matrix encoderNorm1 = addNorm(encoderInput, encoderAttention, "Encoder add&norm 1");
 
     // STEP 6. Encoder Feed Forward
     // Multi-Head Attention(STEP4) -> Add&Norm -> FFN
-    // FFN은 attention으로 섞인 문맥 정보를 각 토큰 위치마다 비선형 변환한다.
-    // 그 뒤 Add & Norm을 한 번 더 수행해 encoder 최종 출력을 만듬
+    // The FFN nonlinearly transforms the context information mixed by attention at each token position.
+    // Then another Add & Norm is performed to produce the final encoder output.
     //
     // X_enc = LayerNorm(X_tilde + FFN(X_tilde))
     stage(6, "Encoder Feed Forward");
@@ -355,15 +356,15 @@ int main() {
     // ******************************************************************************************************************
 
     // STEP 7. Decoder Masked Self-Attention
-    // Decoder self-attention도 Q, K, V를 decoder 입력에서 만들지만,
-    // 미래 토큰을 보면 안 되므로 causal mask를 적용
+    // Decoder self-attention also creates Q, K, and V from the decoder input,
+    // but applies a causal mask because future tokens must not be visible.
     //
     // Mask:
     // M(i, j) = 0      if j <= i
     // M(i, j) = -inf   if j > i
     //
-    // 따라서 첫 번째 위치 <sos>는 뒤의 "transformers"를 볼 수 없고,
-    // 두 번째 위치는 <sos>와 자기 자신까지 볼 수 있다.
+    // Therefore, the first position <sos> cannot see the later token "transformers",
+    // while the second position can see <sos> and itself.
     stage(7, "Decoder Masked Self-Attention");
     std::cout << "Decoder는 미래 토큰을 보지 못하도록 causal mask를 적용\n";
     Matrix decoderMaskedAttention = multiHeadAttention(
@@ -373,8 +374,8 @@ int main() {
     // STEP 8. Decoder Add & Norm After Masked Attention
     // Y_tilde_1 = LayerNorm(Y^(0) + MaskedMHA(Y^(0)))
     //
-    // 지금까지 decoder가 본 토큰 정보와
-    // masked self-attention 결과를 합쳐 현재 decoder 상태를 만듬
+    // Combines the token information seen by the decoder so far
+    // with the masked self-attention result to create the current decoder state.
     stage(8, "Decoder Add & Norm After Masked Attention");
     Matrix decoderNorm1 = addNorm(decoderInput, decoderMaskedAttention, "Decoder add&norm 1");
 
@@ -383,9 +384,9 @@ int main() {
     // ******************************************************************************************************************
 
     // STEP 9. Decoder Cross-Attention
-    // 여기서는 출처가 갈린다.
+    // Here, the sources are separated.
     //
-    // Query  = decoder 쪽 상태
+    // Query  = decoder-side state
     // Key    = encoder output
     // Value  = encoder output
     //
@@ -393,8 +394,8 @@ int main() {
     // K = X_enc W^K
     // V = X_enc W^V
     //
-    // 즉 decoder가 다음 단어를 예측할 때
-    // encoder가 이해한 "I love" 중 무엇을 참고할지 계산한다.
+    // In other words, when the decoder predicts the next word,
+    // it computes which part of the encoder-understood "I love" should be referenced.
     stage(9, "Decoder Cross-Attention");
     std::cout << "Decoder가 encoder output 전체를 memory로 참고한다.\n";
     Matrix crossAttentionOut = multiHeadAttention(
@@ -404,14 +405,14 @@ int main() {
     // STEP 10. Decoder Add & Norm After Cross-Attention
     // Y_tilde_2 = LayerNorm(Y_tilde_1 + CrossMHA(Y_tilde_1, X_enc))
     //
-    // Decoder 내부 문맥과 encoder memory를 합쳐
-    // 입력 문장을 참고한 decoder 표현으로 업데이트한다.
+    // Combines the decoder internal context with the encoder memory
+    // and updates it into a decoder representation that refers to the input sentence.
     stage(10, "Decoder Add & Norm After Cross-Attention");
     Matrix decoderNorm2 = addNorm(decoderNorm1, crossAttentionOut, "Decoder add&norm 2");
 
     // STEP 11. Decoder Feed Forward
-    // Cross-attention으로 얻은 입력-출력 관계 표현을
-    // 다음 토큰 예측에 더 적합한 형태로 다시 변환한다.
+    // Transforms the input-output relationship representation obtained through cross-attention
+    // into a form that is more suitable for next-token prediction.
     //
     // Y_dec = LayerNorm(Y_tilde_2 + FFN(Y_tilde_2))
     stage(11, "Decoder Feed Forward");
@@ -419,13 +420,13 @@ int main() {
     Matrix decoderOutput = addNorm(decoderNorm2, decoderFFNOut, "Decoder add&norm 3");
 
     // STEP 12. Linear Projection To Vocabulary
-    // decoderOutput.back()은 decoder 시퀀스의 "마지막 위치" 벡터를 뜻한다.
+    // decoderOutput.back() means the vector at the "last position" of the decoder sequence.
     //
-    // 현재 decoder 입력이 [<sos>, transformers] 이므로
-    // 마지막 위치는 "transformers" 위치다.
-    // 이 위치에서 다음 토큰 1개를 예측한다.
+    // Since the current decoder input is [<sos>, transformers],
+    // the last position is the "transformers" position.
+    // One next token is predicted from this position.
     //
-    // 수식:
+    // Formula:
     // z = h_last W_vocab
     stage(12, "Linear Projection To Vocabulary");
     Vec finalDecoderState = decoderOutput.back();
@@ -434,8 +435,8 @@ int main() {
     Vec logits(vocab.size(), 0.0f);
     for (size_t vocabIdx = 0; vocabIdx < vocab.size(); ++vocabIdx) {
         for (int d = 0; d < dModel; ++d) {
-            // 마지막 decoder 상태와 vocabulary projection weight를 곱해
-            // 각 단어(<sos>, I, love, transformers, <eos>)의 점수(logit)를 만듬
+            // Multiplies the final decoder state by the vocabulary projection weights
+            // to produce a score (logit) for each token (<sos>, I, love, transformers, <eos>).
             logits[vocabIdx] += finalDecoderState[d] * outputWeight[d][vocabIdx];
         }
     }
@@ -445,43 +446,43 @@ int main() {
     // Softmax:
     // P(v) = exp(z_v) / sum_j exp(z_j)
     //
-    // 가장 확률이 큰 토큰이 다음 토큰 예측 결과가 된다.
+    // The token with the highest probability becomes the predicted next token.
     Vec probs = softmax(logits);
-    std::cout << "\n최종 확률:\n";
+    std::cout << "\nFinal Probabilities:\n";
     for (size_t i = 0; i < vocab.size(); ++i) {
         std::cout << std::setw(12) << vocab[i] << " : "
                   << std::fixed << std::setprecision(6) << probs[i] << "\n";
     }
 
     int predicted = argmax(probs);
-    std::cout << "\n예측된 다음 토큰: " << vocab[predicted] << "\n";
-    std::cout << "이 예시에서는 마지막 decoder 위치가 다음 토큰 후보(<eos> 등)를 예측한다.\n";
+    std::cout << "\nPredicted next token: " << vocab[predicted] << "\n";
+    std::cout << "In this example, the last decoder position predicts the next token candidate (<eos>, etc.).\n";
 
     // STEP 13. Summary
-    // 1. 입력 token ID를 만듬
-    // 2. token ID를 embedding vector로 바꿈
-    // 3. positional encoding을 더함
-    // 4. encoder self-attention을 수행
-    // 5. encoder Add & Norm을 수행
-    // 6. encoder FFN과 Add & Norm으로 encoder output을 만듬
-    // 7. decoder masked self-attention을 수행
-    // 8. decoder Add & Norm을 수행
-    // 9. decoder cross-attention으로 encoder output을 참고한다.
-    // 10. decoder Add & Norm을 수행
-    // 11. decoder FFN과 Add & Norm으로 decoder output을 만듬
-    // 12. 마지막 decoder 위치를 vocab logits로 projection한다.
-    // 13. softmax로 다음 token 확률을 구한다.
+    // 1. Creates input token IDs.
+    // 2. Converts token IDs into embedding vectors.
+    // 3. Adds positional encoding.
+    // 4. Performs encoder self-attention.
+    // 5. Performs encoder Add & Norm.
+    // 6. Creates encoder output through encoder FFN and Add & Norm.
+    // 7. Performs decoder masked self-attention.
+    // 8. Performs decoder Add & Norm.
+    // 9. Refers to the encoder output through decoder cross-attention.
+    // 10. Performs decoder Add & Norm.
+    // 11. Creates decoder output through decoder FFN and Add & Norm.
+    // 12. Projects the final decoder position into vocabulary logits.
+    // 13. Computes next-token probabilities using softmax.
     //
-    // 최종 한 줄 결론:
-    // 이 코드는 "I love"를 Encoder가 문맥 벡터로 만들고,
-    // Decoder가 "<sos> transformers"까지 본 상태에서
-    // 다음 token으로 <eos>를 예측하는 Transformer Encoder-Decoder 예제다.
+    // Final one-line conclusion:
+    // This code is a Transformer encoder-decoder example in which the Encoder converts "I love"
+    // into context vectors, and the Decoder, after seeing "<sos> transformers",
+    // predicts <eos> as the next token.
     stage(13, "Summary");
-    std::cout << "1. forward.cpp는 토큰 1개가 아니라 시퀀스 전체를 attention으로 처리한다.\n";
-    std::cout << "2. Q, K, V를 projection matrix로 따로 만듬\n";
-    std::cout << "3. Multi-head attention을 2개 head로 분리해 다시 합침\n";
-    std::cout << "4. Decoder self-attention에는 causal mask가 들어간다.\n";
-    std::cout << "5. FFN은 2-layer 구조로 확장했고, 마지막 상태를 vocab logits로 바꿈\n";
+    std::cout << "1. forward.cpp processes the entire sequence with attention, not just a single token.\n";
+    std::cout << "2. Creates Q, K, and V as separate projection matrices\n";
+    std::cout << "3. Splits the multi-head attention into two heads and merges them back together\n";
+    std::cout << "4. The decoder self-attention includes a causal mask.\n";
+    std::cout << "5. The FFN has been extended to a 2-layer structure, and the final state has been replaced with vocab logits\n";
 
     return 0;
 }

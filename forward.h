@@ -70,6 +70,72 @@
     - 참고 : 이 파일의 가중치들은 실제 학습된 모델 파라미터가 아닌, 계산 흐름을 설명하기 쉽게 사람이 직접 정한 toy weight
 */
 
+/*
+    [English]
+    Project Overview
+
+    This program is C++ learning code that directly calculates the forward pass of a Transformer Encoder-Decoder using very small example statements.
+
+    * Input Example:
+    - Encoder Input: "I love"
+    - Decoder Input: "<sos> transformers"
+
+    Final Goal:
+    - Output the step-by-step process where the Encoder converts the input sentence into a context vector
+    - The Decoder calculates the probability of the next token based on the tokens seen so far
+    - and predicts it
+
+    [Overall Processing Flow]
+        1. Generate Token ID Sequence
+        2. Embedding Lookup
+        3. Add Positional Encoding
+        4. Encoder Self-Attention
+        5. Encoder Add & Norm
+        6. Encoder FFN
+        --- output ---> Encoder's context vector
+        7. Decoder Masked Self-Attention
+        8. Decoder Add & Norm
+        9. Decoder Cross-Attention
+        10. Decoder Add & Norm
+        11. Decoder FFN
+        12. Linear Projection + Softmax
+        13. Predict Next Token
+
+    [Main Data Types]
+        - Vec: 1-dimensional vector (float array)
+        - Matrix: A 2D matrix (an array of vectors)
+        - AttentionWeights: A structure grouping Wq, Wk, Wv, and Wo
+        - FFNWeights: A structure grouping W1, b1, W2, and b2
+
+    [Description of Functions]
+        - stage: Prints each calculation step to the console in STEP format
+        - printVec, printMatrix: Prints vector and matrix contents in a human-readable format
+        - check: Raises an exception if incorrect input, such as a shape mismatch, is entered
+        - dot: Calculates the inner product of two vectors. - softmax: Converts a 1D score vector into a probability distribution
+        - softmaxRows: Applies softmax to each row of the matrix
+        - zeros: Creates a matrix filled with zeros
+        - transpose: Creates a transpose matrix by flipping the rows and columns
+        - matMul: Performs the multiplication of two matrices
+        - addMatrix, addVec: Adds elements of matrices or vectors of the same shape
+        - addBias: Adds a bias vector to each row of the matrix
+        - linear: Calculates the linear transformation xW (+ b).
+        - relu: Applies the ReLU activation function, converting negative values ​​to zero
+        - layerNormOne: Performs mean/variance-based normalization on a single vector
+        - layerNorm: Applies LayerNorm to each row of the matrix
+        - tokenEmbedding: Finds a token ID in the embedding table and converts it into a vector
+        - positionalEncoding: Creates a sine/cosine-based positional encoding
+        - sliceColumns: Cuts out only a subset of columns from the matrix for multi-head attention - concatColumns: Combines the results of multiple heads in a column direction
+        - scaledDotAttention: Calculates attention scores, applies masks, performs softmax, and performs a weighted sum of values
+        - multiHeadAttention: Generates Q/K/V, splits heads, focuses attention on each head, combines heads, and performs output projection
+        - feedForwardBlock: Performs two linear layers of the FFN and ReLU
+        - addNorm: Applies LayerNorm after residual connection
+        - printTokenIds: Prints the sequence of token IDs
+        - argmax: Finds the index with the highest probability to determine the final predicted token.
+        - main: Executes the entire Transformer forward example in order and prints the results
+        - Note: The weights in this file are not actual trained model parameters, but "toy weights" manually assigned to make it easier to explain the computation flow
+
+*/
+
 using Vec = std::vector<float>;
 using Matrix = std::vector<Vec>;
 
